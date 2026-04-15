@@ -3,10 +3,14 @@ name = "python"
 version = "0.1.0"
 description = "Add your description here"
 readme = "README.md"
-requires-python = ">=3.13"
+requires-python = ">=3.12,<3.13"
 dependencies = [
+    "django>=6.0.4",
     "matplotlib>=3.10.8",
     "numpy>=2.4.4",
     "pandas>=3.0.2",
     "requests>=2.33.1",
+    "torch==2.4.1",
+    "torch-directml>=0.2.5.dev240914",
+    "transformers>=5.5.4",
 ]
