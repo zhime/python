@@ -1,7 +1,14 @@
+import io
 import os
+from contextlib import redirect_stderr, redirect_stdout
 
 import torch
-from transformers import AutoModelForSequenceClassification, AutoTokenizer
+from transformers import logging as transformers_logging
+from transformers import (
+    AutoModelForSequenceClassification,
+    BatchEncoding,
+    BertTokenizer,
+)
 
 MODEL_NAME = "bert-base-chinese"
 LABELS = ["negative", "positive"]
@@ -21,20 +28,30 @@ def select_device() -> tuple[object, str]:
 
 
 DEVICE, DEVICE_NAME = select_device()
+auth_kwargs = {"token": HF_TOKEN} if HF_TOKEN else {}
+transformers_logging.set_verbosity_error()
 
-tokenizer = AutoTokenizer.from_pretrained(MODEL_NAME, token=HF_TOKEN)
-model = AutoModelForSequenceClassification.from_pretrained(
-    MODEL_NAME,
-    num_labels=len(LABELS),
-    token=HF_TOKEN,
-).to(DEVICE)
+with redirect_stdout(io.StringIO()), redirect_stderr(io.StringIO()):
+    tokenizer = BertTokenizer.from_pretrained(MODEL_NAME, **auth_kwargs)
+    model = AutoModelForSequenceClassification.from_pretrained(
+        MODEL_NAME,
+        num_labels=len(LABELS),
+        **auth_kwargs,
+    ).to(DEVICE)
 
 text = "这个产品很好用，我很满意。"
-inputs = tokenizer(text, return_tensors="pt", truncation=True, padding=True)
-inputs = {key: value.to(DEVICE) for key, value in inputs.items()}
+encoded_inputs: BatchEncoding = tokenizer(
+    text,
+    return_tensors="pt",
+    truncation=True,
+    padding=True,
+)
+model_inputs: dict[str, torch.Tensor] = {
+    key: value.to(DEVICE) for key, value in encoded_inputs.items()
+}
 
 with torch.no_grad():
-    outputs = model(**inputs)
+    outputs = model(**model_inputs)
 
 predicted_label_id = outputs.logits.argmax(dim=-1).item()
 print(f"device: {DEVICE_NAME}")
