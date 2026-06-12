@@ -1,10 +1,11 @@
 import base64
 import hashlib
 import hmac
-import logging
+import os
 import time
 import urllib.parse
 
+import dotenv
 import requests
 
 
@@ -45,8 +46,10 @@ def send_custom_robot_group_message(access_token, secret, msg, at_user_ids=None,
 
 
 if __name__ == '__main__':
-    access_token = ""
-    secret = ""
+    dotenv.load_dotenv()
+
+    access_token = os.getenv('DING_TALK_ACCESS_TOKEN')
+    secret = os.getenv('DING_TALK_SECRET')
     msg = "test"
     res = send_custom_robot_group_message(access_token, secret, msg)
     print(res)
